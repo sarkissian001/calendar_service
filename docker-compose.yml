@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  postgres_database:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - calendar_network
+
+  calendar_api:
+    build: .
+    command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - .:/app  # This mounts the current directory to /app in the container
+      - ./migrations:/app/migrations
+    depends_on:
+      - postgres_database
+    environment:
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+    ports:
+      - "8000:8000"
+    networks:
+      - calendar_network
+
+volumes:
+  postgres_data:
+
+networks:
+  calendar_network:
+    driver: bridge
