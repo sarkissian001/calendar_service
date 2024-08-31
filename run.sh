@@ -2,6 +2,8 @@
 set -e
 
 
+SERVICE_NAME="calendar_api"
+
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
 
@@ -19,7 +21,7 @@ wait_for_container() {
     until docker compose exec calendar_api bash -c "echo 'Container is ready'"; do
         sleep 1
     done
-    echo "calendar_api container is ready."
+    echo "$SERVICE_NAME container is ready."
 }
 
 check_and_create_initial_migration() {
@@ -28,12 +30,12 @@ check_and_create_initial_migration() {
     # Check if there are no .py files in the directory
     if ! ls "$MIGRATIONS_DIR"/*.py 1> /dev/null 2>&1; then
         echo "No initial migrations found; creating ..."
-        docker compose exec calendar_api bash -c "alembic revision --autogenerate -m 'initial_migration' && alembic upgrade head"
-#        docker compose exec "$CONTAINER_NAME" bash -c "alembic upgrade head"
+        docker compose exec $SERVICE_NAME bash -c "alembic revision --autogenerate -m 'initial_migration' && alembic upgrade head"
+
         echo "Initial migration setup (if needed) is complete."
     else
          echo "There are already existing migrations - applying...."
-         docker compose exec "$CONTAINER_NAME" bash -c "alembic upgrade head"
+         docker compose exec $SERVICE_NAME bash -c "alembic upgrade head"
     fi
 }
 
