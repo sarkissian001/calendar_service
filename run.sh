@@ -1,9 +1,15 @@
 #!/bin/bash
 set -e
+
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
+
+
 # Function to build and run Docker Compose
 run_docker_compose() {
     echo "Building and starting Docker containers..."
-     docker compose down && docker compose up --build -d
+    docker compose down && docker compose up --build -d
     echo "Docker containers are up and running."
 }
 
@@ -16,11 +22,26 @@ wait_for_container() {
     echo "calendar_api container is ready."
 }
 
+check_and_create_initial_migration() {
+    MIGRATIONS_DIR="$SCRIPT_DIR/migrations/versions"
 
-# Main script execution
+    # Check if there are no .py files in the directory
+    if ! ls "$MIGRATIONS_DIR"/*.py 1> /dev/null 2>&1; then
+        echo "No initial migrations found; creating ..."
+        docker compose exec calendar_api bash -c "alembic revision --autogenerate -m 'initial_migration' && alembic upgrade head"
+#        docker compose exec "$CONTAINER_NAME" bash -c "alembic upgrade head"
+        echo "Initial migration setup (if needed) is complete."
+    else
+         echo "There are already existing migrations - applying...."
+         docker compose exec "$CONTAINER_NAME" bash -c "alembic upgrade head"
+    fi
+}
+
+
 main() {
     run_docker_compose
     wait_for_container
+    check_and_create_initial_migration
 }
 
 main
