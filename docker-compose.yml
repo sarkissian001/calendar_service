@@ -15,7 +15,7 @@ services:
 
   calendar_api:
     build: .
-    command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"] # autoreload if app changes locally
     volumes:
       - .:/app  # This mounts the current directory to /app in the container
       - ./migrations:/app/migrations
